@@ -1,5 +1,6 @@
-{-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE MagicHash    #-}
+{-# LANGUAGE BangPatterns     #-}
+{-# LANGUAGE MagicHash        #-}
+{-# LANGUAGE TypeApplications #-}
 
 module System.Random.LinearCongruentialGenerators where
 
@@ -43,6 +44,19 @@ nextInt rng = do
 
 nextWord :: RNG -> IO Word
 nextWord = unsafeCoerce <$> nextInt
+
+nextDouble :: RNG -> IO Double
+nextDouble rng = do
+  t <- nextWord rng
+  let x = 0x3ff .<<. 52 .|. t .>>. 12
+  return $! unsafeCoerce @Word @Double x - 1.0
+
+nextGauss :: RNG -> Double -> Double -> IO Double
+nextGauss rng mu sigma = do
+  x <- nextDouble rng
+  y <- nextDouble rng
+  let z = sqrt (-2.0 * log x) * cos (2.0 * pi * y)
+  return $! sigma * z + mu
 
 randomR :: RNG -> Int -> Int -> IO Int
 randomR rng l r = (+ l) . flip mod (r - l + 1) <$> nextInt rng

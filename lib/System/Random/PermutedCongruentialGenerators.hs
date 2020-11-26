@@ -51,9 +51,14 @@ nextWord32 rng = do
 
 nextWord :: RNG -> IO Word
 nextWord rng = do
-  w1 <- unsafeCoerce @Word32 @Word <$> nextWord32 rng
-  w2 <- unsafeCoerce @Word32 @Word <$> nextWord32 rng
-  return $ w1 .<<.32 .|. w2
+  x1 <- VUM.unsafeRead rng 0
+  let
+    cnt   = x1 .>>. 59
+    state = x1 * multiplier + increment
+    x2    = x1 .^. (x1 .>>. (5 + fromIntegral cnt))
+    x3    = x2 * 12605985483714917081
+  VUM.unsafeWrite rng 0 state
+  return $ unsafeCoerce (x3 .^. (x3 .>>. 43))
 
 nextInt :: RNG -> IO Int
 nextInt = unsafeCoerce <$> nextWord
