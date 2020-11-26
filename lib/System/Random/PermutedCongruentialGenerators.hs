@@ -56,7 +56,7 @@ nextWord rng = do
     cnt   = x1 .>>. 59
     state = x1 * multiplier + increment
     x2    = x1 .^. (x1 .>>. (5 + fromIntegral cnt))
-    x3    = x2 * 12605985483714917081
+    x3    = x2 * 0xaef17502108ef2d9
   VUM.unsafeWrite rng 0 state
   return $ unsafeCoerce (x3 .^. (x3 .>>. 43))
 
