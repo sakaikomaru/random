@@ -1,6 +1,6 @@
 module Main where
 
-import           System.Random.PermutedCongruentialGenerators
+import           System.Random.MiddleSquare
 import qualified Data.Vector.Unboxed                          as VU
 import qualified Data.Vector.Unboxed.Mutable                  as VUM
 
