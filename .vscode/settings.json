@@ -1,0 +1,7 @@
+{
+  "editor.fontSize": 20,
+  "editor.fontFamily": "Fira Code",
+  "editor.tabSize": 2,
+  "editor.fontLigatures": true,
+  "workbench.colorTheme": "Visual Studio 2019 Dark"
+}

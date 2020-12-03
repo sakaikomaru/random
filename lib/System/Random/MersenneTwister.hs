@@ -26,11 +26,11 @@ _pointer = 312
 {-# INLINE _pointer #-}
 
 _lowerMask :: Word64
-_lowerMask = 0b0000000000000000000000000000000001111111111111111111111111111111
+_lowerMask = 0x7FFFFFFF
 {-# INLINE _lowerMask #-}
 
 _upperMask :: Word64
-_upperMask = 0b1111111111111111111111111111111110000000000000000000000000000000
+_upperMask = 0xFFFFFFFF80000000
 {-# INLINE _upperMask #-}
 
 type MT19937 = VUM.IOVector Word64
@@ -42,7 +42,7 @@ newMT19937 seed = do
   VUM.unsafeWrite mt 0 seed
   range 1 311 $ \mti -> do
     item <- VUM.unsafeRead mt (mti - 1)
-    let rnd = 6364136223846793005 * (item .^. (item .>>. 62)) + unsafeCoerce @Int @Word64 mti
+    let rnd = 0x5851F42D4C957F2D * (item .^. (item .>>. 62)) + unsafeCoerce @Int @Word64 mti
     VUM.unsafeWrite mt mti rnd
   return mt
 
@@ -115,43 +115,43 @@ shuffle mt19937 vec = do
 -- for
 -------------------------------------------------------------------------------
 rep :: Monad m => Int -> (Int -> m ()) -> m ()
-rep n = flip VFSM.mapM_ (streamG 0 (n - 1) const 0 (+) 1)
+rep n = flip VFSM.mapM_ (stream 0 n)
 {-# INLINE rep #-}
 
 rep' :: Monad m => Int -> (Int -> m ()) -> m ()
-rep' n = flip VFSM.mapM_ (streamG 0 n const 0 (+) 1)
+rep' n = flip VFSM.mapM_ (stream 0 (n + 1))
 {-# INLINE rep' #-}
 
 rep1 :: Monad m => Int -> (Int -> m ()) -> m ()
-rep1 n = flip VFSM.mapM_ (streamG 1 (n - 1) const 0 (+) 1)
+rep1 n = flip VFSM.mapM_ (stream 1 n)
 {-# INLINE rep1 #-}
 
 rep1' :: Monad m => Int -> (Int -> m ()) -> m ()
-rep1' n = flip VFSM.mapM_ (streamG 1 n const 0 (+) 1)
+rep1' n = flip VFSM.mapM_ (stream 1 (n + 1))
 {-# INLINE rep1' #-}
 
 rev :: Monad m => Int -> (Int -> m ()) -> m ()
-rev n = flip VFSM.mapM_ (streamRG (n - 1) 0 const 0 (-) 1)
+rev n = flip VFSM.mapM_ (streamR 0 n)
 {-# INLINE rev #-}
 
 rev' :: Monad m => Int -> (Int -> m ()) -> m ()
-rev' n = flip VFSM.mapM_ (streamRG n 0 const 0 (-) 1)
+rev' n = flip VFSM.mapM_ (streamR 0 (n + 1))
 {-# INLINE rev' #-}
 
 rev1 :: Monad m => Int -> (Int -> m ()) -> m ()
-rev1 n = flip VFSM.mapM_ (streamRG (n - 1) 1 const 0 (-) 1)
+rev1 n = flip VFSM.mapM_ (streamR 1 n)
 {-# INLINE rev1 #-}
 
 rev1' :: Monad m => Int -> (Int -> m ()) -> m ()
-rev1' n = flip VFSM.mapM_ (streamRG n 1 const 0 (-) 1)
+rev1' n = flip VFSM.mapM_ (streamR 1 (n + 1))
 {-# INLINE rev1' #-}
 
 range :: Monad m => Int -> Int -> (Int -> m ()) -> m ()
-range l r = flip VFSM.mapM_ (streamG l r const 0 (+) 1)
+range l r = flip VFSM.mapM_ (stream l (r + 1))
 {-# INLINE range #-}
 
 rangeR :: Monad m => Int -> Int -> (Int -> m ()) -> m ()
-rangeR r l = flip VFSM.mapM_ (streamRG r l const 0 (-) 1)
+rangeR r l = flip VFSM.mapM_ (streamR l (r + 1))
 {-# INLINE rangeR #-}
 
 forP :: Monad m => Int -> (Int -> m ()) -> m ()
@@ -165,6 +165,24 @@ forG l r f p g d = flip VFSM.mapM_ (streamG l r f p g d)
 forRG :: Monad m => Int -> Int -> (Int -> Int -> Int) -> Int -> (Int -> Int -> Int) -> Int -> (Int -> m ()) -> m ()
 forRG r l f p g d = flip VFSM.mapM_ (streamRG r l f p g d)
 {-# INLINE forRG #-}
+
+stream :: Monad m => Int -> Int -> VFSM.Stream m Int
+stream !l !r = VFSM.Stream step l
+  where
+    step x
+      | x < r     = return $ VFSM.Yield x (x + 1)
+      | otherwise = return VFSM.Done
+    {-# INLINE [0] step #-}
+{-# INLINE [1] stream #-}
+
+streamR :: Monad m => Int -> Int -> VFSM.Stream m Int
+streamR !l !r = VFSM.Stream step (r - 1)
+  where
+    step x
+      | x >= l = return $ VFSM.Yield x (x - 1)
+      | otherwise = return VFSM.Done
+    {-# INLINE [0] step #-}
+{-# INLINE [1] streamR #-}
 
 streamG :: Monad m => Int -> Int -> (Int -> Int -> Int) -> Int -> (Int -> Int -> Int) -> Int -> VFSM.Stream m Int
 streamG !l !r !f !p !g !d = VFSM.Stream step l
@@ -275,3 +293,7 @@ bitReverse
     step :: Int -> Word64 -> Word64 -> Word64 -> Word64
     step i ml mr = \ !x -> (x .&. ml) .>>. i .|. (x .&. mr) .<<. i
     {-# INLINE step #-}
+
+ctzceilpow2 :: Int -> Int
+ctzceilpow2 = countTrailingZeros . ceilPow2
+{-# INLINE ctzceilpow2 #-}
