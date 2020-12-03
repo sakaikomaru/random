@@ -17,7 +17,7 @@ import qualified Data.Vector.Unboxed               as VU
 import qualified Data.Vector.Unboxed.Mutable       as VUM
 
 -------------------------------------------------------------------------------
--- LCGs
+-- linear congruential generators
 -------------------------------------------------------------------------------
 type RNG = VUM.IOVector Int
 

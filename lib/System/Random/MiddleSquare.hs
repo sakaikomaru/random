@@ -16,6 +16,10 @@ import qualified Data.Vector.Fusion.Stream.Monadic as VFSM
 import qualified Data.Vector.Unboxed               as VU
 import qualified Data.Vector.Unboxed.Mutable       as VUM
 
+
+-------------------------------------------------------------------------------
+-- middle square weyl sequence
+-------------------------------------------------------------------------------
 s :: Word64
 s = 0xb5ad4eceda1ce2a9
 {-# INLINE s #-}
