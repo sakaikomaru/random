@@ -1,9 +1,10 @@
 module Main where
 
-import           System.Random.XorShift
+import           System.Random.WichmannHill
 import           System.CPUTime
 import qualified Data.Vector.Unboxed                          as VU
 import qualified Data.Vector.Unboxed.Mutable                  as VUM
+
 
 main :: IO ()
 main = do
